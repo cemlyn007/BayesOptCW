@@ -1,7 +1,7 @@
 from typing import Tuple, Union
 
 import numpy as np
-from keras.utils import np_utils
+from tensorflow.keras import utils
 import tensorflow
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.models import Sequential
@@ -25,8 +25,8 @@ class NeuralNetworkDigitRecogniser(ObjectiveFunction):
     X_test = X_test.reshape(10000, 784)
 
     # Convert the y's to categorical to use with the softmax classifier
-    y_train = np_utils.to_categorical(y_train, 10)
-    y_test = np_utils.to_categorical(y_test, 10)
+    y_train = utils.to_categorical(y_train, 10)
+    y_test = utils.to_categorical(y_test, 10)
 
     # Establish the input shape for our Networks.
     input_shape = X_train[0].shape

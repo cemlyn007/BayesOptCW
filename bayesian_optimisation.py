@@ -1,6 +1,6 @@
 import numpy as np
 import copy
-
+from typing import Generator
 import objective_functions.abstract_objective_function
 import objective_functions.six_hump_camel
 from acquisition_functions.abstract_acquisition_function import AcquisitionFunction
@@ -44,7 +44,7 @@ class BayesianOptimisation(object):
             number_steps: int,
             array_initial_dataset: np.ndarray,
             array_initial_objective_function_values: np.ndarray,
-            ) -> None:
+            ) -> Generator:
         """
         Generator that performs a bayesian optimisation
 
@@ -76,7 +76,6 @@ class BayesianOptimisation(object):
         for index_step in range(number_steps):
             print(f"Step {index_step}/{number_steps} - Evaluating Objective Function at position {arg_max_acquisition_function.tolist()}")
             arg_max_acquisition_function = self._bayesian_optimisation_step(arg_max_acquisition_function)
-
             # The yield keyword makes the method behave like a generator
             yield self._gaussian_process, self._acquisition_function, arg_max_acquisition_function
 
@@ -88,8 +87,8 @@ class BayesianOptimisation(object):
         :return: the next computed arg_max of the acquisition function after having updated the Gaussian Process
         """
         # TODO
-        x = arg_max_acquisition_function
-        self._gaussian_process.add_data_point(x, float(self._objective_function.evaluate(x)))
+        self._gaussian_process.add_data_point(arg_max_acquisition_function,
+                                              float(self._objective_function.evaluate(arg_max_acquisition_function)))
         self._gaussian_process.optimise_parameters(disp=False)
         return self.compute_arg_max_acquisition_function()
 

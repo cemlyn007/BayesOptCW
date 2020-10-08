@@ -21,5 +21,5 @@ class MaternKernel(Kernel):
         ynorms_2 = np.diag(Y.dot(Y.T)).reshape(len(Y), -1)
         xnorms_2 = xnorms_2 @ np.ones((1, ynorms_2.shape[0]))
         ynorms_2 = np.ones((xnorms_2.shape[0], 1)) @ ynorms_2.T
-        tmp_calc = np.sqrt(3 * (xnorms_2+ynorms_2-2*X@Y.T))/self.length_scale
+        tmp_calc = np.sqrt(3 * (xnorms_2 + ynorms_2 - 2 * X @ Y.T)) / self.length_scale
         return self.amplitude_squared * (1 + tmp_calc) * np.exp(-tmp_calc)

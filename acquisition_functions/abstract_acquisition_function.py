@@ -25,7 +25,7 @@ class AcquisitionFunction(metaclass=abc.ABCMeta):
         """
 
         def evaluate_gaussian_process(data_point: np.ndarray) -> float:
-            return -1 * self.evaluate(gaussian_process, objective_function, data_point)
+            return float(-1 * self.evaluate(gaussian_process, objective_function, data_point))
 
         boundaries = tuple(map(itemgetter(0), objective_function.dataset_bounds))
 
