@@ -24,17 +24,18 @@ class LowerConfidenceBound(AcquisitionFunction):
         self._confidence_rate = new_confidence_rate
 
     def _evaluate(self,
-                 gaussian_process: GaussianProcess,
-                 data_points: np.ndarray,
-                 ) -> np.ndarray:
+                  gaussian_process: GaussianProcess,
+                  data_points: np.ndarray,
+                  ) -> np.ndarray:
         """
         Evaluates the acquisition function at all the data points
         :param gaussian_process:
-        :param data_points: numpy array of dimension n x m where n is the number of elements to evaluate
-        and m is the number of variables used to calculate the objective function
-        :return: a numpy array of shape n x 1 (or a float) representing the estimation of the acquisition function at
-        each point
+        :param data_points: numpy array of dimension n x m where n is the number
+        of elements to evaluate
+        and m is the number of variables used to calculate the objective
+        function
+        :return: a numpy array of shape n x 1 (or a float) representing the
+        estimation of the acquisition function at each point
         """
-
-        mean_data_points, std_data_points = gaussian_process(data_points.reshape((-1, gaussian_process.array_dataset.shape[1])))
-        return -1 * (mean_data_points - np.sqrt(self.confidence_rate) * std_data_points)
+        mean, std = gaussian_process.get_gp_mean_std(data_points)
+        return -1 * (mean - np.sqrt(self.confidence_rate) * std)

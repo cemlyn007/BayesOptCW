@@ -1,6 +1,6 @@
 import numpy as np
 from kernels.abstract_kernel import Kernel
-from scipy.spatial import distance_matrix, minkowski_distance_p, minkowski_distance
+from scipy.spatial import distance_matrix
 
 
 class GaussianKernel(Kernel):
@@ -27,19 +27,14 @@ class GaussianKernel(Kernel):
                     position (i, j) corresponds to the value of
         k(x_i, y_j), where k represents the kernel used.
         """
-        # TODO:
         if X.ndim == 1:
             X = X.reshape((len(X), -1))
         if Y.ndim == 1:
             Y = Y.reshape((len(Y), -1))
 
-        return self.amplitude_squared * np.exp(-distance_matrix(X, Y) ** 2 / (2 * self.length_scale ** 2))
-
-        # xnorms_2 = np.diag(X.dot(X.T)).reshape(len(X), -1)
-        # ynorms_2 = np.diag(Y.dot(Y.T)).reshape(len(Y), -1)
-        # xnorms_2 = xnorms_2 @ np.ones((1, ynorms_2.shape[0]))
-        # ynorms_2 = np.ones((xnorms_2.shape[0], 1)) @ ynorms_2.T
-        # return self.amplitude_squared * np.exp(-(xnorms_2 + ynorms_2 - 2 * X @ Y.T) / (2 * self.length_scale ** 2))
+        return (self.amplitude_squared
+                * np.exp(-distance_matrix(X, Y) ** 2
+                         / (2 * self.length_scale ** 2)))
 
     def __call__(self,
                  X: np.ndarray,

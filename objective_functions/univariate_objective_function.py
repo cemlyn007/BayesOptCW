@@ -11,16 +11,22 @@ class UnivariateObjectiveFunction(ObjectiveFunction):
     def __init__(self,
                  additional_gaussian_noise_std: float = 0.,
                  ):
-        super(UnivariateObjectiveFunction, self).__init__(additional_gaussian_noise_std)
+        super(UnivariateObjectiveFunction, self).__init__(
+            additional_gaussian_noise_std
+        )
 
     def evaluate_without_noise(self,
                                x: Union[np.ndarray, float],
                                ) -> Union[np.ndarray, float]:
         """
-        Same as evaluate(data_points) but does not apply any additional noise to the results
-        :param data_points: numpy array of dimension n x m where n is the number of elements to evaluate
-        and m is the number of variables used to calculate the objective function
-        :return:  a numpy array of dimension n x 1 representing all the evaluations for all the n elements.
+        Same as evaluate(data_points) but does not apply any additional noise
+        to the results
+        :param data_points: numpy array of dimension n x m where n is the number
+        of elements to evaluate
+        and m is the number of variables used to calculate the objective
+        function
+        :return:  a numpy array of dimension n x 1 representing all the
+        evaluations for all the n elements.
         """
         result = np.sin(x) + np.sin((10. / 3.) * x)
         return result

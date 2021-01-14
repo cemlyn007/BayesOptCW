@@ -22,10 +22,14 @@ class ObjectiveFunction(metaclass=abc.ABCMeta):
                  data_points: np.ndarray,
                  ) -> np.ndarray:
         """
-        Evaluates the objective function at all the data points and adds a gaussian noise to it.
-        :param data_points: numpy array of dimension n x m where n is the number of elements to evaluate
-        and m is the number of variables used to calculate the objective function
-        :return: a numpy array of dimension n x 1 representing all the evaluations for all the n elements.
+        Evaluates the objective function at all the data points and adds a
+        gaussian noise to it.
+        :param data_points: numpy array of dimension n x m where n is the number
+        of elements to evaluate
+        and m is the number of variables used to calculate the objective
+        function
+        :return: a numpy array of dimension n x 1 representing all the
+        evaluations for all the n elements.
         """
 
         data_points = data_points.copy()
@@ -35,20 +39,24 @@ class ObjectiveFunction(metaclass=abc.ABCMeta):
         data_points = self.floor_integer_parameters(data_points)
         result_without_noise = self.evaluate_without_noise(data_points)
 
-        return result_without_noise + \
-               np.random.normal(loc=0.,
-                                scale=self._additional_gaussian_noise_std,
-                                size=result_without_noise.shape)
+        return (result_without_noise +
+                np.random.normal(loc=0.,
+                                 scale=self._additional_gaussian_noise_std,
+                                 size=result_without_noise.shape))
 
     @abc.abstractmethod
     def evaluate_without_noise(self,
                                data_points: np.ndarray,
                                ) -> Union[np.ndarray, float]:
         """
-        Same as evaluate(data_points) but does not apply any additional noise to the results
-        :param data_points: numpy array of dimension n x m where n is the number of elements to evaluate
-        and m is the number of variables used to calculate the objective function
-        :return:  a numpy array of dimension n x 1 representing all the evaluations for all the n elements.
+        Same as evaluate(data_points) but does not apply any additional noise
+        to the results
+        :param data_points: numpy array of dimension n x m where n is the number
+        of elements to evaluate
+        and m is the number of variables used to calculate the objective
+        function
+        :return:  a numpy array of dimension n x 1 representing all the
+        evaluations for all the n elements.
         """
         pass
 
@@ -80,24 +88,26 @@ class ObjectiveFunction(metaclass=abc.ABCMeta):
                                    number_initial_points: int
                                    ) -> np.ndarray:
         """
-        Generates a set of number_initial_points elements uniformly sampled according to the dataset bounds
+        Generates a set of number_initial_points elements uniformly sampled
+        according to the dataset bounds
         :param number_initial_points:
-        :return: A numpy array of dimension number_initial_points x m where m is the number of variables of the
-        objective function
+        :return: A numpy array of dimension number_initial_points x m where m
+        is the number of variables of the objective function
         """
 
-        array_initial_dataset = np.array([]).reshape((0, len(self.dataset_bounds)))
+        initial_dataset = np.array([]).reshape((0, len(self.dataset_bounds)))
         boundaries = tuple(map(itemgetter(0), self.dataset_bounds))
 
         for _ in range(number_initial_points):
             random_point = np.random.uniform(*zip(*boundaries))
-            array_initial_dataset = np.vstack((array_initial_dataset, random_point))
+            initial_dataset = np.vstack((initial_dataset, random_point))
 
-        return array_initial_dataset
+        return initial_dataset
 
-    def get_array_indexes_integer_parameters(self) -> np.ndarray:
+    def get_indexes_integer_parameters(self) -> np.ndarray:
         """
-        :return: an array containing the indexes of the variables which are of type: TypeVariable.INTEGER
+        :return: an array containing the indexes of the variables which
+        are of type: TypeVariable.INTEGER
         """
         list_indexes_integer_parameters = []
 
@@ -109,20 +119,24 @@ class ObjectiveFunction(metaclass=abc.ABCMeta):
 
     def floor_integer_parameters(self, data_points: np.ndarray) -> np.ndarray:
         """
-        :param data_points: numpy array of dimension n x m where n is the number of elements to evaluate
-        and m is the number of variables used to calculate the objective function
-        :return: a numpy array of dimension n x m in which all variables of type TypeVariable.INTEGER
-        are converted to integers
+        :param data_points: numpy array of dimension n x m where n is the
+        number of elements to evaluate
+        and m is the number of variables used to calculate the objective
+        function
+        :return: a numpy array of dimension n x m in which all variables
+        of type TypeVariable.INTEGER are converted to integers
         """
-        array_indexes_integer_parameters = self.get_array_indexes_integer_parameters()
-        if array_indexes_integer_parameters.size > 0:
-            data_points[:, array_indexes_integer_parameters] = np.floor(data_points[:, array_indexes_integer_parameters])
+        indexes_of_integers = self.get_indexes_integer_parameters()
+        if indexes_of_integers.size > 0:
+            floored_values = np.floor(data_points[:, indexes_of_integers])
+            data_points[:, indexes_of_integers] = floored_values
         return data_points
 
     def get_mesh_grid(self, list_number_points_per_axis):
         list_grid_points = []
         for index_axis, ((x_min, x_max), _) in enumerate(self.dataset_bounds):
-            list_grid_points.append(np.linspace(x_min, x_max, list_number_points_per_axis[index_axis]))
+            number_of_points = list_number_points_per_axis[index_axis]
+            list_grid_points.append(np.linspace(x_min, x_max, number_of_points))
         return np.meshgrid(*list_grid_points, sparse=True)
 
     def plot(self, list_number_points_per_axis):

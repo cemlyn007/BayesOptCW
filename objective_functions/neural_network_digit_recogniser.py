@@ -78,8 +78,9 @@ class NeuralNetworkDigitRecogniser(ObjectiveFunction):
                                 batch_size,
                                 adam_decay
                                 ) -> float:
-        model = self.create_model(learning_rate, num_dense_layers, num_input_nodes, num_dense_nodes, activation,
-                                  adam_decay)
+        model = self.create_model(learning_rate, num_dense_layers,
+                                  num_input_nodes, num_dense_nodes,
+                                  activation, adam_decay)
         # named blackbox becuase it represents the structure
         blackbox = model.fit(x=self.X_train,
                              y=self.y_train,
@@ -144,8 +145,8 @@ class NeuralNetworkDigitRecogniser(ObjectiveFunction):
                      adam_decay):
         # start the model making process and create our first layer
         model = Sequential()
-        model.add(Dense(num_input_nodes, input_shape=cls.input_shape, activation=activation
-                        ))
+        model.add(Dense(num_input_nodes, input_shape=cls.input_shape,
+                        activation=activation))
         # create a loop making a new dense layer for the amount passed to this model.
         # naming the layers helps avoid tensorflow error deep in the stack trace.
         for i in range(num_dense_layers):

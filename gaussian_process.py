@@ -1,4 +1,3 @@
-
 from typing import Tuple
 import matplotlib.pyplot as plt
 import numpy as np
@@ -7,6 +6,7 @@ from scipy.stats import norm
 
 from kernels.abstract_kernel import Kernel
 from objective_functions.abstract_objective_function import ObjectiveFunction
+from scipy.spatial import distance_matrix
 
 
 class GaussianProcess(object):
@@ -31,27 +31,27 @@ class GaussianProcess(object):
         """
 
         self._kernel = kernel
-
-        if array_dataset is not None:  # If dataset provided, we initialise our gaussian process with it.
-            self.initialise_dataset(array_dataset, array_objective_function_values)
-        else:  # If dataset not provided, we initialise with an empty dataset.
-            self._array_dataset = np.asarray([])
-            self._array_objective_function_values = np.asarray([]).reshape((0, 1))
-
+        if (isinstance(array_dataset, np.ndarray)
+                and isinstance(array_objective_function_values, np.ndarray)):
+            self.initialise_dataset(array_dataset,
+                                    array_objective_function_values)
+        else:
+            self._dataset = np.asarray([])
+            self._objective_function_values = np.asarray([])
             self._covariance_matrix = np.asarray([])
 
     @property
     def array_dataset(self) -> np.ndarray:
         """
         :return: array representing all the data points used to calculate the
-                posterior mean and variance of the GP.
+        posterior mean and variance of the GP.
         Its dimension is n x l, there are:
-        - n elements in the dataset. Each row corresponds to a data
-            point x_i (with 1<=i<=n), at which the objective function can be evaluated
+        - n elements in the dataset. Each row corresponds to a data point x_i
+        (with 1<=i<=n), at which the objective function can be evaluated.
         - each one of them is of dimension l (representing the number of
         variables required by the objective function)
         """
-        return self._array_dataset
+        return self._dataset
 
     @property
     def array_objective_function_values(self) -> np.ndarray:
@@ -59,7 +59,7 @@ class GaussianProcess(object):
         :return: array of the evaluations for all the elements in array_dataset
         Its shape is hence n x 1 (it's a column vector)
         """
-        return self._array_objective_function_values
+        return self._objective_function_values
 
     def set_kernel_parameters(self,
                               log_amplitude: float,
@@ -67,9 +67,8 @@ class GaussianProcess(object):
                               log_noise_scale: float,
                               ) -> None:
         """
-        This function updates the kernel parameters based on the ones provided here.
-        It also updates the covariance matrix of the gaussian process.
-
+        This function updates the kernel parameters based on the ones provided
+        here. It also updates the covariance matrix of the gaussian process.
         :param log_amplitude:
         :param log_length_scale:
         :param log_noise_scale:
@@ -81,10 +80,12 @@ class GaussianProcess(object):
 
     def update_covariance_matrix(self) -> None:
         """
-        Uses the kernel to update the member self._covariance_matrix depending on:
+        Uses the kernel to update the member self._covariance_matrix
+        depending on:
         - self._array_dataset
         """
-        self._covariance_matrix = self._kernel(self._array_dataset, self._array_dataset)
+        self._covariance_matrix = self._kernel(self._dataset,
+                                               self._dataset)
 
     def add_data_point(self,
                        data_point: np.ndarray,
@@ -96,23 +97,25 @@ class GaussianProcess(object):
          - self._array_objective_function_values
          and update the covariance matrix accordingly
 
-        :param data_point: row numpy array representing the new point at which the objective function has been evaluated
+        :param data_point: row numpy array representing the new point at which
+        the objective function has been evaluated
         :param objective_function_value: corresponding objective function value
         """
-        if np.size(self._array_dataset) == 0:
-            # if the dataset is empty we just need to initialise it
-            self._array_dataset = np.asarray(data_point).reshape((1, -1))
-            self._array_objective_function_values = np.asarray(objective_function_value).reshape((1, 1))
+        if np.size(self._dataset) == 0:
+            self._dataset = np.asarray(data_point).reshape((1, -1))
+            self._objective_function_values = np.asarray(
+                objective_function_value
+            ).reshape((1, 1))
         else:
-            assert np.size(data_point) == np.size(self._array_dataset, 1)
+            assert np.size(data_point) == np.size(self._dataset, 1)
 
-            self._array_dataset = np.vstack((
-                self._array_dataset,
+            self._dataset = np.vstack((
+                self._dataset,
                 np.asarray(data_point)
             ))
 
-            self._array_objective_function_values = np.vstack((
-                self._array_objective_function_values,
+            self._objective_function_values = np.vstack((
+                self._objective_function_values,
                 np.asarray(objective_function_value)
             ))
 
@@ -129,35 +132,35 @@ class GaussianProcess(object):
         and update the covariance matrix accordingly
         """
 
-        array_dataset = np.asarray(array_dataset)
-        array_objective_function_values = np.asarray(array_objective_function_values)
+        assert len(array_objective_function_values) == len(array_dataset)
 
-        assert np.size(array_objective_function_values) == np.size(array_dataset, 0)
+        self._dataset = array_dataset
+        self._objective_function_values = array_objective_function_values
 
-        self._array_dataset = array_dataset
-        self._array_objective_function_values = array_objective_function_values.reshape((-1, 1))
+        if self._dataset.ndim == 1:
+            self._dataset = np.expand_dims(self._dataset, -1)
+        if self._objective_function_values.ndim == 1:
+            self._objective_function_values = np.expand_dims(
+                self._objective_function_values, -1
+            )
 
         self.update_covariance_matrix()
 
-    def optimise_parameters(self, disp=True):
+    def optimise_parameters(self, disp=True) -> np.ndarray:
         """
-        Uses the BFGS algorithm to estimate the parameters of the kernel which minimise the
-        :param disp: display some info regarding the optimisation performed by the BFGS algorithm
+        Uses the BFGS algorithm to estimate the parameters of the kernel which
+        minimise the
+        :param disp: display some info regarding the optimisation performed by
+        the BFGS algorithm
         :return: a row numpy array containing the parameters found for
         """
 
         # Defining intermediate functions for the optimisation algorithm after
-        def get_negative_log_marginal_likelihood_from_array(params: np.ndarray):
-            params = params.flatten()
-            return self.get_negative_log_marginal_likelihood(log_amplitude=params[0],
-                                                             log_length_scale=params[1],
-                                                             log_noise_scale=params[2])
+        def get_negative_log_marginal_likelihood(params: np.ndarray):
+            return self.get_negative_log_marginal_likelihood(*params)
 
-        def get_gradient_negative_log_marginal_likelihood_from_array(params: np.ndarray):
-            params = params.flatten()
-            return self.get_gradient_negative_log_marginal_likelihood(log_amplitude=params[0],
-                                                                      log_length_scale=params[1],
-                                                                      log_noise_scale=params[2])
+        def get_gradient_negative_log_marginal_likelihood(params: np.ndarray):
+            return self.get_gradient_negative_log_marginal_likelihood(*params)
 
         initial_parameters = np.asarray([
             self._kernel.log_amplitude,
@@ -165,15 +168,13 @@ class GaussianProcess(object):
             self._kernel.log_noise_scale
         ])
 
-        # Minimisation procedure
         optimized_parameters = scipy.optimize.minimize(
-            fun=get_negative_log_marginal_likelihood_from_array,
+            fun=get_negative_log_marginal_likelihood,
             x0=initial_parameters,
             method='BFGS',
-            jac=get_gradient_negative_log_marginal_likelihood_from_array,
+            jac=get_gradient_negative_log_marginal_likelihood,
             options={'disp': disp}
         )
-
         return optimized_parameters
 
     def get_negative_log_marginal_likelihood(self,
@@ -187,16 +188,18 @@ class GaussianProcess(object):
         - log_length_scale
         - log_noise_scale
         """
-        self.set_kernel_parameters(log_amplitude, log_length_scale, log_noise_scale)
+        self.set_kernel_parameters(log_amplitude, log_length_scale,
+                                   log_noise_scale)
         K = self._covariance_matrix
         K_noise = K + self._kernel.noise_scale_squared * np.identity(len(K))
-        y = self._array_objective_function_values
+        y = self._objective_function_values
         L = np.linalg.cholesky(K_noise)
         inv_L = np.linalg.inv(L)
         inv_L_T = np.linalg.inv(L.T)
         log_detK = sum(np.log(np.diag(L)))
         yT_invM_y = y.T @ inv_L_T @ inv_L @ y
-        return float(0.5*yT_invM_y+0.5*2*log_detK+(len(K)/2)*np.log(2*np.pi))
+        return (0.5 * yT_invM_y + 0.5 * 2 * log_detK
+                + (len(K) / 2) * np.log(2 * np.pi)).item()
 
     def get_gradient_negative_log_marginal_likelihood(self,
                                                       log_amplitude: float,
@@ -204,62 +207,62 @@ class GaussianProcess(object):
                                                       log_noise_scale: float
                                                       ) -> np.ndarray:
         """
-        :return: The value of gradient of the negative log marginal likelihood depending on:
+        :return: The value of gradient of the negative log marginal likelihood
+        depending on:
         - log_amplitude
         - log_length_scale
         - log_noise_scale
         """
-        self.set_kernel_parameters(log_amplitude, log_length_scale, log_noise_scale)
-
+        self.set_kernel_parameters(log_amplitude, log_length_scale,
+                                   log_noise_scale)
         K = self._covariance_matrix
         K_noise = K + self._kernel.noise_scale_squared * np.identity(K.shape[0])
         K_noise_inv = np.linalg.inv(K_noise)
-        y = self._array_objective_function_values
-
+        y = self._objective_function_values
         alpha = K_noise_inv.dot(y)
-
         length_scale = self._kernel.length_scale
         sigma2_n = self._kernel.noise_scale_squared
-
-        array_squared_distances = np.asarray([
-            [np.linalg.norm(x_p - x_q) ** 2 for x_q in self._array_dataset]
-            for x_p in self._array_dataset
-        ])
-
-        # Computing gradients
+        squared_distances = distance_matrix(self._dataset,
+                                            self._dataset) ** 2
         grad_log_length_scale = (
-                (-1. / (2 * length_scale ** 2))
-                * np.trace((alpha.dot(alpha.T) - K_noise_inv).dot(array_squared_distances * K))
+                (-1. / (2. * length_scale ** 2))
+                * np.trace((alpha @ alpha.T - K_noise_inv) @
+                           (squared_distances * K))
         )
-        grad_log_sigma_n = -sigma2_n * np.trace((alpha.dot(alpha.T) - K_noise_inv))
-        grad_log_sigma_f = -np.trace((alpha.dot(alpha.T) - K_noise_inv).dot(K))
-
-        array_gradients = np.asarray([
+        grad_log_sigma_n = -sigma2_n * np.trace((alpha @ alpha.T - K_noise_inv))
+        grad_log_sigma_f = -np.trace((alpha @ alpha.T - K_noise_inv) @ K)
+        gradients = np.asarray([
             grad_log_sigma_f,
             grad_log_length_scale,
             grad_log_sigma_n
         ])
-
-        return array_gradients
+        return gradients
 
     def mean(self, data_points: np.ndarray):
         """
-        :param data_points: array representing all the data points at which we want to predict the posterior mean of the GP.
+        :param data_points: array representing all the data points at which we
+        want to predict the posterior mean of the GP.
         Its dimension is n x l, there are:
-        - n elements in the dataset. Each row corresponds to a data point x_i (with 1<=i<=n), at which the objective function can be evaluated
-        - each one of them is of dimension l (representing the number of variables required by the objective function)
-        :return: a column numpy array of size n x 1 with the estimation of the predicted mean of the gaussian process for
-        all the points in data_points
+        - n elements in the dataset. Each row corresponds to a data point
+        x_i (with 1<=i<=n), at which the objective function can be evaluated
+        - each one of them is of dimension l (representing the number of
+        variables required by the objective function)
+        :return: a column numpy array of size n x 1 with the estimation of the
+        predicted mean of the gaussian process for all the points in data_points
         """
         return self.get_gp_mean_std(data_points)[0]
 
     def std(self, data_points: np.ndarray):
         """
-        :param data_points: array representing all the data points at which we want to predict the posterior standard deviation of the GP.
+        :param data_points: array representing all the data points at which we
+        want to predict the posterior standard deviation of the GP.
         Its dimension is n x l, there are:
-        - n elements in the dataset. Each row corresponds to a data point x_i (with 1<=i<=n), at which the objective function can be evaluated
-        - each one of them is of dimension l (representing the number of variables required by the objective function)
-        :return: a column numpy array of size n x 1 with the estimation of the predicted standard deviation of the gaussian process for
+        - n elements in the dataset. Each row corresponds to a data point x_i
+        (with 1<=i<=n), at which the objective function can be evaluated
+        - each one of them is of dimension l (representing the number of
+        variables required by the objective function)
+        :return: a column numpy array of size n x 1 with the estimation of
+        the predicted standard deviation of the gaussian process for
         all the points in data_points
         """
         return self.get_gp_mean_std(data_points)[1]
@@ -284,29 +287,27 @@ class GaussianProcess(object):
         :return: a flattened numpy array of size n containing a sample of
             the objective function values at the n points.
             it is a sample from a multivariate normal distribution with:
-        - mean = array of respective means predicted at the gaussian process for each point
+        - mean = array of respective means predicted at the gaussian process
+        for each point
         - covariance matrix = k(new_data_points, new_data_points) where k refers
             to the kernel function.
         """
-        # TODO
-        if len(self._array_dataset) > 0:
+        if len(self._dataset) > 0:
             K = self._covariance_matrix
             K_noise = K + self._kernel.noise_scale_squared * np.identity(len(K))
             L = np.linalg.cholesky(K_noise)
             inv_matrix = np.linalg.inv(L.T) @ np.linalg.inv(L)
-            mean = (self._kernel(self._array_dataset, new_data_points).T
-                    @ inv_matrix @ self._array_objective_function_values)
+            mean = (self._kernel(self._dataset, new_data_points).T
+                    @ inv_matrix @ self._objective_function_values)
             cov = (self._kernel(new_data_points, new_data_points)
-                   - self._kernel(self._array_dataset, new_data_points).T
+                   - self._kernel(self._dataset, new_data_points).T
                    @ inv_matrix
-                   @ self._kernel(self._array_dataset, new_data_points))
+                   @ self._kernel(self._dataset, new_data_points))
         else:
-            # Case where no training data is yet stored
             mean = np.zeros((len(new_data_points), 1))
             cov = self._kernel(new_data_points, new_data_points)
 
         return np.random.multivariate_normal(mean.flatten(), cov)
-
 
     def get_gp_mean_std(self,
                         new_data_points: np.ndarray
@@ -328,44 +329,49 @@ class GaussianProcess(object):
             predicted standard deviation of the gaussian process for
             all the points in data_points
         """
-        # TODO
-        new_data_points = new_data_points.reshape((len(new_data_points), -1))
-        if len(self._array_dataset) > 0:
+        if len(self._dataset) > 0:
             K = self._covariance_matrix
             K_noise = K + self._kernel.noise_scale_squared * np.identity(len(K))
             L = np.linalg.cholesky(K_noise)
             inv_matrix = np.linalg.inv(L.T) @ np.linalg.inv(L)
-            mean = (self._kernel(self._array_dataset, new_data_points).T
-                    @ inv_matrix @ self._array_objective_function_values)
+            mean = (self._kernel(self._dataset, new_data_points).T
+                    @ inv_matrix @ self._objective_function_values)
             cov = (self._kernel(new_data_points, new_data_points)
-                   - self._kernel(self._array_dataset, new_data_points).T
+                   - self._kernel(self._dataset, new_data_points).T
                    @ inv_matrix
-                   @ self._kernel(self._array_dataset, new_data_points))
+                   @ self._kernel(self._dataset, new_data_points))
         else:
             mean = np.zeros((len(new_data_points), 1))
             cov = self._kernel(new_data_points, new_data_points)
 
-        return mean, np.sqrt(np.diag(cov)).reshape((-1, 1))
+        sigma = np.expand_dims(np.sqrt(np.diag(cov)), -1)
+        return mean, sigma
 
     def get_mse(self,
                 data_points_test: np.ndarray,
                 evaluations_test: np.ndarray
                 ) -> float:
         """
-        :param data_points_test: array representing all the data points at which we want to predict the posterior mean of the GP.
+        :param data_points_test: array representing all the data points at
+        which we want to predict the posterior mean of the GP.
         Its dimension is n x l, there are:
-        - n elements in the dataset. Each row corresponds to a data point x_i (with 1<=i<=n), at which the objective function can be evaluated
-        - each one of them is of dimension l (representing the number of variables required by the objective function)
-        :param evaluations_test: array of the evaluations for all the elements in array_dataset. Its shape is hence n x 1 (it's a column vector)
+        - n elements in the dataset. Each row corresponds to a data point
+        x_i (with 1<=i<=n), at which the objective function can be evaluated
+        - each one of them is of dimension l (representing the number of
+        variables required by the objective function)
+        :param evaluations_test: array of the evaluations for all the
+        elements in array_dataset. Its shape is hence n x 1
+        (it's a column vector)
         :return: the computed mean squared error between:
         - the predictions of the gaussian process
         - the true evaluations in evaluations_test
         """
-        evaluations_test = evaluations_test.reshape((-1, 1))
+        if evaluations_test.ndim == 1:
+            evaluations_test = evaluations_test.reshape((-1, 1))
         mean, _ = self.get_gp_mean_std(data_points_test)
         mean = mean.reshape((-1, 1))
         return np.mean(
-            np.power(mean - evaluations_test, 2)
+            np.square(mean - evaluations_test)
         ).item()
 
     def get_log_predictive_density(self,
@@ -384,10 +390,9 @@ class GaussianProcess(object):
             in array_dataset. Its shape is hence n x 1 (it's a column vector)
         :return: the computed log predictive density on the test set.
         """
-        # TODO
         mean, std = self.get_gp_mean_std(data_points_test)
         std = np.sqrt(np.square(std) + self._kernel.noise_scale_squared)
-        return float(np.sum(norm.logpdf(evaluations_test.flatten(), mean.flatten(), std.flatten())))
+        return np.sum(norm.logpdf(evaluations_test, mean, std)).item()
 
     def plot_with_samples(self,
                           number_samples: int,
@@ -425,13 +430,15 @@ class GaussianProcess(object):
             plt.plot(xx, mean + 3 * std, c='r')
             plt.plot(xx, mean - 3 * std, c='b')
 
-            plt.fill_between(xx, mean - 3 * std, mean + 3 * std, alpha=0.2, color='m')
+            plt.fill_between(xx, mean - 3 * std, mean + 3 * std,
+                             alpha=0.2, color='m')
             plt.scatter(self.array_dataset,
                         self.array_objective_function_values,
                         c='g',
                         marker='+')
 
-            plt.plot(x_gt, objective_function.evaluate_without_noise(x_gt), c='c')
+            plt.plot(x_gt, objective_function.evaluate_without_noise(x_gt),
+                     c='c')
             plt.title(f"Gaussian Process Regression")
 
             if show:
@@ -474,7 +481,7 @@ class GaussianProcess(object):
             plt.title("Gaussian Process Posterior Mean")
             plt.show()
 
-            # Mean contour plot
+            # Std contour plot
             contour_levels = [
                 np.percentile(std.flatten(), k) for k in range(101)
             ]

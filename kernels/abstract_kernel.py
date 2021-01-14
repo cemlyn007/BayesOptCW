@@ -61,16 +61,23 @@ class Kernel(metaclass=abc.ABCMeta):
     def noise_scale_squared(self):
         return np.exp(self.log_noise_scale * 2)
 
+    @property
+    def log_parameters(self):
+        return self.log_amplitude, self.log_length_scale, self.log_noise_scale
+
     @abc.abstractmethod
     def get_covariance_matrix(self,
                               X: np.ndarray,
                               Y: np.ndarray,
                               ):
         """
-        :param X: numpy array of size n_1 x l for which each row (x_i) is a data point at which the objective function can be evaluated
-        :param Y: numpy array of size n_2 x m for which each row (y_j) is a data point at which the objective function can be evaluated
-        :return: numpy array of size n_1 x n_2 for which the value at position (i, j) corresponds to the value of
-        k(x_i, y_j), where k represents the kernel used.
+        :param X: numpy array of size n_1 x l for which each row (x_i) is a data
+        point at which the objective function can be evaluated
+        :param Y: numpy array of size n_2 x m for which each row (y_j) is a data
+         point at which the objective function can be evaluated
+        :return: numpy array of size n_1 x n_2 for which the value at position
+        (i, j) corresponds to the value of k(x_i, y_j), where k represents the
+        kernel used.
         """
         pass
 

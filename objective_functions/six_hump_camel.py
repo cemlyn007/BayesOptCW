@@ -12,10 +12,14 @@ class SixHumpCamelObjectiveFunction(ObjectiveFunction):
                                data_points: np.ndarray
                                ) -> Union[np.ndarray, float]:
         """
-        Same as evaluate(data_points) but does not apply any additional noise to the results
-        :param data_points: numpy array of dimension n x m where n is the number of elements to evaluate
-        and m is the number of variables used to calculate the objective function
-        :return:  a numpy array of dimension n x 1 representing all the evaluations for all the n elements.
+        Same as evaluate(data_points) but does not apply any additional
+        noise to the results
+        :param data_points: numpy array of dimension n x m where n is the number
+        of elements to evaluate
+        and m is the number of variables used to calculate the objective
+        function
+        :return:  a numpy array of dimension n x 1 representing all the
+        evaluations for all the n elements.
         """
         x = data_points[:, 0]
         y = data_points[:, 1]
@@ -24,9 +28,8 @@ class SixHumpCamelObjectiveFunction(ObjectiveFunction):
         x4 = x ** 4
         y2 = y ** 2
 
-        return (4.0 - 2.1 * x2 + (x4 / 3.0)) * x2 \
-               + x * y \
-               + (-4.0 + 4.0 * y2) * y2
+        return ((4.0 - 2.1 * x2 + (x4 / 3.0)) * x2
+                + x * y + (-4.0 + 4.0 * y2) * y2)
 
     @property
     def dataset_bounds(self) -> Tuple[Tuple[Tuple[float, float],
