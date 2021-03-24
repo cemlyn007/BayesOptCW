@@ -13,6 +13,7 @@ class BayesianOptimisation:
                  kernel: Kernel,
                  objective_function: ObjectiveFunction,
                  acquisition_function: AcquisitionFunction,
+                 verbose=False
                  ):
         """
         :param kernel: Kernel object used by the gaussian process to perform
@@ -25,6 +26,7 @@ class BayesianOptimisation:
         self._gaussian_process = GaussianProcess(kernel)
         self._objective_function = objective_function
         self._acquisition_function = acquisition_function
+        self.verbose = verbose
 
     def _initialise_gaussian_process(self,
                                      dataset: np.ndarray,
@@ -83,20 +85,22 @@ class BayesianOptimisation:
         all the elements in array_dataset. Its shape is hence n x 1
         (it's a column vector)
         """
-        print(
-            f"Step {0}/{number_steps} "
-            f"- Initialise Gaussian Process for Provided Dataset"
-        )
+        if self.verbose:
+            print(
+                f"Step {0}/{number_steps} "
+                f"- Initialise Gaussian Process for Provided Dataset"
+            )
         self._initialise_gaussian_process(initial_dataset,
                                           initial_objective_function_values)
         arg_max_of_acquisition_function = self.compute_arg_max_of_acquisition_function()
 
-        for index_step in range(number_steps):
-            print(
-                f"Step {index_step}/{number_steps} "
-                f"- Evaluating Objective Function at position: "
-                f"{arg_max_of_acquisition_function.tolist()}"
-            )
+        for index_step in range(1, number_steps + 1):
+            if self.verbose:
+                print(
+                    f"Step {index_step}/{number_steps} "
+                    f"- Evaluating Objective Function at position: "
+                    f"{arg_max_of_acquisition_function.tolist()}"
+                )
             arg_max_of_acquisition_function = self._step(arg_max_of_acquisition_function)
             yield (self._gaussian_process,
                    self._acquisition_function,
