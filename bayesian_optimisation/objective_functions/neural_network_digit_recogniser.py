@@ -9,8 +9,8 @@ from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.datasets import mnist
 from tensorflow.keras import backend as K
 
-from .abstract_objective_function import ObjectiveFunction
-from .parameter_category import TypeVariable
+from gp.objective_function import ObjectiveFunction
+from gp.parameter_category import TypeVariable
 
 
 class NeuralNetworkDigitRecogniser(ObjectiveFunction):
@@ -36,12 +36,12 @@ class NeuralNetworkDigitRecogniser(ObjectiveFunction):
                                ) -> Union[np.ndarray, float]:
         evaluations = []
         for data_point in data_points:
-            log_learning_rate, \
-            num_dense_layers, \
-            num_input_nodes, \
-            num_dense_nodes, \
-            batch_size, \
-            log_adam_decay = data_point
+            (log_learning_rate,
+             num_dense_layers,
+             num_input_nodes,
+             num_dense_nodes,
+             batch_size,
+             log_adam_decay) = data_point
 
             learning_rate = np.exp(log_learning_rate)
             num_dense_layers = int(num_dense_layers)

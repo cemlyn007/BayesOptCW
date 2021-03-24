@@ -1,10 +1,10 @@
 import numpy as np
 import copy
 from typing import Generator
-from .objective_functions.abstract_objective_function import ObjectiveFunction
+from gp.objective_function import ObjectiveFunction
 from .acquisition_functions.abstract_acquisition_function import AcquisitionFunction
-from .gaussian_process import GaussianProcess
-from .kernels.abstract_kernel import Kernel
+from gp.gaussian_process import GaussianProcess
+from gp.kernels.kernel import Kernel
 
 
 class BayesianOptimisation:

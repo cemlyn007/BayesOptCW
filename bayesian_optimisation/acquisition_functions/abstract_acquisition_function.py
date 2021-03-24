@@ -6,8 +6,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy import optimize
 
-from ..gaussian_process import GaussianProcess
-from ..objective_functions.abstract_objective_function import ObjectiveFunction
+from gp.gaussian_process import GaussianProcess
+from gp.objective_function import ObjectiveFunction
 
 
 class AcquisitionFunction(metaclass=abc.ABCMeta):

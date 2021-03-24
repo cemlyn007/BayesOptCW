@@ -1,3 +1,5 @@
-scipy
-numpy
-matplotlib
+scipy~=1.6.1
+numpy~=1.20.1
+matplotlib~=3.3.4
+gp=git+https://github.com/cemlyn007/GaussianProcesses
+setuptools~=54.2.0

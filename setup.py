@@ -9,6 +9,7 @@ setup(
     install_requires=[
         'scipy',
         'numpy',
-        'matplotlib'
+        'matplotlib',
+        'gp @ git+https://github.com/cemlyn007/GaussianProcesses'
     ],
 )

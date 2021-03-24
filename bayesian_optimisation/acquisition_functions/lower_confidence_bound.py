@@ -1,7 +1,7 @@
 import numpy as np
 
 from ..acquisition_functions.abstract_acquisition_function import AcquisitionFunction
-from ..gaussian_process import GaussianProcess
+from gp.gaussian_process import GaussianProcess
 
 
 class LowerConfidenceBound(AcquisitionFunction):

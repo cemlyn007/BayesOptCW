@@ -3,8 +3,8 @@ from typing import Union, Tuple
 import numpy as np
 from matplotlib import pyplot as plt
 
-from .abstract_objective_function import ObjectiveFunction
-from .parameter_category import TypeVariable
+from gp.objective_function import ObjectiveFunction
+from gp.parameter_category import TypeVariable
 
 
 class SixHumpCamelObjectiveFunction(ObjectiveFunction):
