@@ -1,13 +1,11 @@
 import numpy as np
+from gp.gaussian_process import GaussianProcess
 
 from ..acquisition_functions.abstract_acquisition_function import AcquisitionFunction
-from gp.gaussian_process import GaussianProcess
 
 
 class LowerConfidenceBound(AcquisitionFunction):
-    def __init__(self,
-                 confidence_rate: float
-                 ):
+    def __init__(self, confidence_rate: float):
         super(LowerConfidenceBound, self).__init__()
         assert confidence_rate >= 0
         self._confidence_rate = confidence_rate
@@ -21,10 +19,11 @@ class LowerConfidenceBound(AcquisitionFunction):
         assert new_confidence_rate >= 0
         self._confidence_rate = new_confidence_rate
 
-    def _evaluate(self,
-                  gaussian_process: GaussianProcess,
-                  data_points: np.ndarray,
-                  ) -> np.ndarray:
+    def _evaluate(
+        self,
+        gaussian_process: GaussianProcess,
+        data_points: npt.NDArray[np.float64],
+    ) -> npt.NDArray[np.float64]:
         """
         Evaluates the acquisition function at all the data points
         :param gaussian_process:

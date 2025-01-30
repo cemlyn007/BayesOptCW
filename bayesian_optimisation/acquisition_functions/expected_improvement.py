@@ -1,15 +1,14 @@
 import numpy as np
+from gp.gaussian_process import GaussianProcess
 from scipy.stats import norm
 
 from ..acquisition_functions.abstract_acquisition_function import AcquisitionFunction
-from gp.gaussian_process import GaussianProcess
 
 
 class ExpectedImprovement(AcquisitionFunction):
-    def _evaluate(self,
-                  gaussian_process: GaussianProcess,
-                  data_points: np.ndarray
-                  ) -> np.ndarray:
+    def _evaluate(
+        self, gaussian_process: GaussianProcess, data_points: npt.NDArray[np.float64]
+    ) -> npt.NDArray[np.float64]:
         """
         Evaluates the acquisition function at all the data points
         :param gaussian_process:

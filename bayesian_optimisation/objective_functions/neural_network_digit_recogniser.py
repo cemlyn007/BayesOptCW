@@ -1,16 +1,15 @@
 from typing import Tuple, Union
 
 import numpy as np
-from tensorflow.keras import utils
 import tensorflow
+from gp.objective_function import ObjectiveFunction
+from gp.parameter_category import TypeVariable
+from tensorflow.keras import backend as K
+from tensorflow.keras import utils
+from tensorflow.keras.datasets import mnist
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.datasets import mnist
-from tensorflow.keras import backend as K
-
-from gp.objective_function import ObjectiveFunction
-from gp.parameter_category import TypeVariable
 
 
 class NeuralNetworkDigitRecogniser(ObjectiveFunction):
@@ -31,17 +30,19 @@ class NeuralNetworkDigitRecogniser(ObjectiveFunction):
     # Establish the input shape for our Networks.
     input_shape = X_train[0].shape
 
-    def evaluate_without_noise(self,
-                               data_points: np.ndarray
-                               ) -> Union[np.ndarray, float]:
+    def evaluate_without_noise(
+        self, data_points: npt.NDArray[np.float64]
+    ) -> Union[np.ndarray, float]:
         evaluations = []
         for data_point in data_points:
-            (log_learning_rate,
-             num_dense_layers,
-             num_input_nodes,
-             num_dense_nodes,
-             batch_size,
-             log_adam_decay) = data_point
+            (
+                log_learning_rate,
+                num_dense_layers,
+                num_input_nodes,
+                num_dense_nodes,
+                batch_size,
+                log_adam_decay,
+            ) = data_point
 
             learning_rate = np.exp(log_learning_rate)
             num_dense_layers = int(num_dense_layers)
@@ -50,46 +51,59 @@ class NeuralNetworkDigitRecogniser(ObjectiveFunction):
             batch_size = int(batch_size)
             adam_decay = np.exp(log_adam_decay)
 
-            print(log_learning_rate,
-                  num_dense_layers,
-                  num_input_nodes,
-                  num_dense_nodes,
-                  batch_size,
-                  log_adam_decay)
+            print(
+                log_learning_rate,
+                num_dense_layers,
+                num_input_nodes,
+                num_dense_nodes,
+                batch_size,
+                log_adam_decay,
+            )
 
-            activation_function = 'relu'
+            activation_function = "relu"
 
-            evaluations.append(self._evaluate_without_noise(learning_rate,
-                                                            num_dense_layers,
-                                                            num_input_nodes,
-                                                            num_dense_nodes,
-                                                            activation_function,
-                                                            batch_size,
-                                                            adam_decay))
+            evaluations.append(
+                self._evaluate_without_noise(
+                    learning_rate,
+                    num_dense_layers,
+                    num_input_nodes,
+                    num_dense_nodes,
+                    activation_function,
+                    batch_size,
+                    adam_decay,
+                )
+            )
 
         return np.asarray(evaluations).reshape((-1, 1))
 
-    def _evaluate_without_noise(self,
-                                learning_rate,
-                                num_dense_layers,
-                                num_input_nodes,
-                                num_dense_nodes,
-                                activation,
-                                batch_size,
-                                adam_decay
-                                ) -> float:
-        model = self.create_model(learning_rate, num_dense_layers,
-                                  num_input_nodes, num_dense_nodes,
-                                  activation, adam_decay)
+    def _evaluate_without_noise(
+        self,
+        learning_rate,
+        num_dense_layers,
+        num_input_nodes,
+        num_dense_nodes,
+        activation,
+        batch_size,
+        adam_decay,
+    ) -> float:
+        model = self.create_model(
+            learning_rate,
+            num_dense_layers,
+            num_input_nodes,
+            num_dense_nodes,
+            activation,
+            adam_decay,
+        )
         # named blackbox becuase it represents the structure
-        blackbox = model.fit(x=self.X_train,
-                             y=self.y_train,
-                             epochs=3,
-                             batch_size=batch_size,
-                             validation_split=0.15,
-                             )
+        blackbox = model.fit(
+            x=self.X_train,
+            y=self.y_train,
+            epochs=3,
+            batch_size=batch_size,
+            validation_split=0.15,
+        )
         # return the validation accuracy for the last epoch.
-        accuracy = blackbox.history['val_accuracy'][-1]
+        accuracy = blackbox.history["val_accuracy"][-1]
 
         # Print the classification accuracy.
         print()
@@ -109,9 +123,7 @@ class NeuralNetworkDigitRecogniser(ObjectiveFunction):
         return -accuracy
 
     @property
-    def dataset_bounds(self) -> Tuple[Tuple[Tuple[float, float],
-                                            TypeVariable],
-                                      ...]:
+    def dataset_bounds(self) -> Tuple[Tuple[Tuple[float, float], TypeVariable], ...]:
         """
         Defines the bounds and the types of variables for the objective function
 
@@ -132,34 +144,35 @@ class NeuralNetworkDigitRecogniser(ObjectiveFunction):
             ((1, 512 + 1), TypeVariable.INTEGER),  # Number input nodes
             ((1, 28 + 1), TypeVariable.INTEGER),  # Number dense nodes
             ((1, 128 + 1), TypeVariable.INTEGER),  # batch size
-            ((np.log(1e-6), np.log(1e-2)), TypeVariable.REAL)  # log adam decay
+            ((np.log(1e-6), np.log(1e-2)), TypeVariable.REAL),  # log adam decay
         )
 
     @classmethod
-    def create_model(cls,
-                     learning_rate,
-                     num_dense_layers,
-                     num_input_nodes,
-                     num_dense_nodes,
-                     activation,
-                     adam_decay):
+    def create_model(
+        cls,
+        learning_rate,
+        num_dense_layers,
+        num_input_nodes,
+        num_dense_nodes,
+        activation,
+        adam_decay,
+    ):
         # start the model making process and create our first layer
         model = Sequential()
-        model.add(Dense(num_input_nodes, input_shape=cls.input_shape,
-                        activation=activation))
+        model.add(
+            Dense(num_input_nodes, input_shape=cls.input_shape, activation=activation)
+        )
         # create a loop making a new dense layer for the amount passed to this model.
         # naming the layers helps avoid tensorflow error deep in the stack trace.
         for i in range(num_dense_layers):
-            name = 'layer_dense_{0}'.format(i + 1)
-            model.add(Dense(num_dense_nodes,
-                            activation=activation,
-                            name=name
-                            ))
+            name = "layer_dense_{0}".format(i + 1)
+            model.add(Dense(num_dense_nodes, activation=activation, name=name))
         # add our classification layer.
-        model.add(Dense(10, activation='softmax'))
+        model.add(Dense(10, activation="softmax"))
 
         # setup our optimizer and compile
         adam = Adam(lr=learning_rate, decay=adam_decay)
-        model.compile(optimizer=adam, loss='categorical_crossentropy',
-                      metrics=['accuracy'])
+        model.compile(
+            optimizer=adam, loss="categorical_crossentropy", metrics=["accuracy"]
+        )
         return model

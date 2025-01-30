@@ -1,16 +1,15 @@
-from typing import Union, Tuple
+from typing import Tuple, Union
 
 import numpy as np
-from matplotlib import pyplot as plt
-
 from gp.objective_function import ObjectiveFunction
 from gp.parameter_category import TypeVariable
+from matplotlib import pyplot as plt
 
 
 class SixHumpCamelObjectiveFunction(ObjectiveFunction):
-    def evaluate_without_noise(self,
-                               data_points: np.ndarray
-                               ) -> Union[np.ndarray, float]:
+    def evaluate_without_noise(
+        self, data_points: npt.NDArray[np.float64]
+    ) -> Union[np.ndarray, float]:
         """
         Same as evaluate(data_points) but does not apply any additional
         noise to the results
@@ -24,17 +23,14 @@ class SixHumpCamelObjectiveFunction(ObjectiveFunction):
         x = data_points[:, 0]
         y = data_points[:, 1]
 
-        x2 = x ** 2
-        x4 = x ** 4
-        y2 = y ** 2
+        x2 = x**2
+        x4 = x**4
+        y2 = y**2
 
-        return ((4.0 - 2.1 * x2 + (x4 / 3.0)) * x2
-                + x * y + (-4.0 + 4.0 * y2) * y2)
+        return (4.0 - 2.1 * x2 + (x4 / 3.0)) * x2 + x * y + (-4.0 + 4.0 * y2) * y2
 
     @property
-    def dataset_bounds(self) -> Tuple[Tuple[Tuple[float, float],
-                                            TypeVariable],
-                                      ...]:
+    def dataset_bounds(self) -> Tuple[Tuple[Tuple[float, float], TypeVariable], ...]:
         """
         Defines the bounds and the types of variables for the objective function
 
@@ -50,25 +46,20 @@ class SixHumpCamelObjectiveFunction(ObjectiveFunction):
         """
 
         return (
-            ((-3., 3.), TypeVariable.REAL),
-            ((-2., 2.), TypeVariable.REAL),
+            ((-3.0, 3.0), TypeVariable.REAL),
+            ((-2.0, 2.0), TypeVariable.REAL),
         )
 
     def plot(self, list_number_points_per_axis):
         mesh_grid = self.get_mesh_grid(list_number_points_per_axis)
         xx, yy = mesh_grid
         xx, yy = xx.flatten(), yy.flatten()
-        data_points = np.asarray([
-            [x, y]
-            for y in yy
-            for x in xx
-        ])
+        data_points = np.asarray([[x, y] for y in yy for x in xx])
 
         evaluations = self.evaluate(data_points)
         evaluations = evaluations.reshape((xx.size, yy.size))
         levels = np.arange(-1.5, 10, 0.5)
-        plt.contourf(mesh_grid[0].flatten(),
-                     mesh_grid[1].flatten(),
-                     evaluations,
-                     levels=levels)
+        plt.contourf(
+            mesh_grid[0].flatten(), mesh_grid[1].flatten(), evaluations, levels=levels
+        )
         plt.show()
