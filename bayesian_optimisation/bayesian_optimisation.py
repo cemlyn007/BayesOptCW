@@ -1,4 +1,5 @@
 import copy
+import numpy.typing as npt
 from typing import Generator
 
 import numpy as np
@@ -6,7 +7,9 @@ from gp.gaussian_process import GaussianProcess
 from gp.kernels.kernel import Kernel
 from gp.objective_function import ObjectiveFunction
 
-from .acquisition_functions.abstract_acquisition_function import AcquisitionFunction
+from bayesian_optimisation.acquisition_functions.abstract_acquisition_function import (
+    AcquisitionFunction,
+)
 
 
 class BayesianOptimisation:

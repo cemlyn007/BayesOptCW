@@ -1,5 +1,4 @@
-from typing import Tuple, Union
-
+import numpy.typing as npt
 import numpy as np
 from gp.objective_function import ObjectiveFunction
 from gp.parameter_category import TypeVariable
@@ -9,7 +8,7 @@ from matplotlib import pyplot as plt
 class SixHumpCamelObjectiveFunction(ObjectiveFunction):
     def evaluate_without_noise(
         self, data_points: npt.NDArray[np.float64]
-    ) -> Union[np.ndarray, float]:
+    ) -> npt.NDArray[np.float64] | float:
         """
         Same as evaluate(data_points) but does not apply any additional
         noise to the results
@@ -30,7 +29,7 @@ class SixHumpCamelObjectiveFunction(ObjectiveFunction):
         return (4.0 - 2.1 * x2 + (x4 / 3.0)) * x2 + x * y + (-4.0 + 4.0 * y2) * y2
 
     @property
-    def dataset_bounds(self) -> Tuple[Tuple[Tuple[float, float], TypeVariable], ...]:
+    def dataset_bounds(self) -> tuple[tuple[tuple[float, float], TypeVariable], ...]:
         """
         Defines the bounds and the types of variables for the objective function
 

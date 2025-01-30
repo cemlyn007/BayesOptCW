@@ -1,8 +1,12 @@
 import numpy as np
+import numpy.typing as npt
 from gp.gaussian_process import GaussianProcess
-from scipy.stats import norm
+import scipy.stats
 
-from ..acquisition_functions.abstract_acquisition_function import AcquisitionFunction
+
+from bayesian_optimisation.acquisition_functions.abstract_acquisition_function import (
+    AcquisitionFunction,
+)
 
 
 class ExpectedImprovement(AcquisitionFunction):
@@ -21,4 +25,4 @@ class ExpectedImprovement(AcquisitionFunction):
         mean, std = gaussian_process.get_gp_mean_std(data_points)
         function_values = gaussian_process.array_objective_function_values
         gamma = (np.min(function_values) - mean) / std
-        return std * (gamma * norm.cdf(gamma) + norm.pdf(gamma))
+        return std * (gamma * scipy.stats.norm.cdf(gamma) + scipy.stats.norm.pdf(gamma))

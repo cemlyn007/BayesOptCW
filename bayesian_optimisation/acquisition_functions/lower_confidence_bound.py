@@ -1,7 +1,10 @@
 import numpy as np
+import numpy.typing as npt
 from gp.gaussian_process import GaussianProcess
 
-from ..acquisition_functions.abstract_acquisition_function import AcquisitionFunction
+from bayesian_optimisation.acquisition_functions.abstract_acquisition_function import (
+    AcquisitionFunction,
+)
 
 
 class LowerConfidenceBound(AcquisitionFunction):
