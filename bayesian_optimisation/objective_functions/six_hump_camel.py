@@ -1,5 +1,5 @@
-import numpy.typing as npt
 import numpy as np
+import numpy.typing as npt
 from gp.objective_function import ObjectiveFunction
 from gp.parameter_category import TypeVariable
 from matplotlib import pyplot as plt

@@ -1,8 +1,8 @@
 import copy
-import numpy.typing as npt
 from typing import Generator
 
 import numpy as np
+import numpy.typing as npt
 from gp.gaussian_process import GaussianProcess
 from gp.kernels.kernel import Kernel
 from gp.objective_function import ObjectiveFunction

@@ -1,6 +1,5 @@
 import abc
 from operator import itemgetter
-from typing import Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -64,7 +63,7 @@ class AcquisitionFunction(metaclass=abc.ABCMeta):
         gaussian_process: GaussianProcess,
         objective_function: ObjectiveFunction,
         data_points: npt.NDArray[np.float64],
-    ) -> Union[float, npt.NDArray[np.float64]]:
+    ) -> npt.NDArray[np.float64]:
         return self.evaluate(gaussian_process, objective_function, data_points)
 
     def evaluate(
@@ -111,7 +110,7 @@ class AcquisitionFunction(metaclass=abc.ABCMeta):
         self,
         gaussian_process: GaussianProcess,
         objective_function: ObjectiveFunction,
-        last_evaluated_point: Union[float, npt.NDArray[np.float64]],
+        last_evaluated_point: npt.NDArray[np.float64],
     ):
         number_dimensions = len(objective_function.dataset_bounds)
 
